@@ -1,8 +1,8 @@
-# Lesson: Introduction to AI Integration with Spring AI
+# Lesson: Coaching: Recap on REST API Development with Spring Boot + Introduction to Spring AI
 
 ## Lesson Overview
 
-This lesson introduces Spring AI — a framework that makes it straightforward to connect your Spring Boot application to a Large Language Model (LLM) such as OpenAI's GPT. You will go from a blank Spring Boot project to a working AI-powered REST endpoint in a single session. No prior AI experience is required.
+This Saturday coaching session has two parts. The first hour revisits the key concepts from Lesson 3.11 — REST API development with Spring Boot — through a structured recap and a hands-on activity. The second part introduces Spring AI, a framework that makes it straightforward to connect your Spring Boot application to a Large Language Model (LLM) such as OpenAI's GPT. You will go from a blank Spring Boot project to a working AI-powered REST endpoint in a single session. No prior AI experience is required.
 
 **Prerequisites:** Spring Boot basics (Lesson 3.11) — project setup, controllers, `application.properties`, Dependency Injection
 
@@ -10,9 +10,59 @@ This lesson introduces Spring AI — a framework that makes it straightforward t
 
 By the end of this lesson, students will be able to:
 
-1. **Add** Spring AI to a Spring Boot project and configure it with an OpenAI API key
-2. **Build** a REST endpoint that sends a user prompt to an LLM and returns the response
-3. **Customise** AI behaviour by applying a system prompt
+1. **Demonstrate** understanding of REST API development with Spring Boot by building a working endpoint from scratch
+2. **Add** Spring AI to a Spring Boot project and configure it with an OpenAI API key
+3. **Build** a REST endpoint that sends a user prompt to an LLM and returns the response
+4. **Customise** AI behaviour by applying a system prompt
+
+---
+
+## Revision: Lesson 3.11 Key Concepts (60 min)
+
+This session begins with a revision of Lesson 3.11 — the foundation that students need to be comfortable with before the Spring AI code-along. Work through each topic briefly and invite students to ask questions as you go.
+
+### 1. Project Setup + Running Spring Boot (5 min)
+- Recap how to create a Spring Boot project via Spring Initializr
+- Recap how to add dependencies to `pom.xml` and run with `mvn spring-boot:run`
+- Quickly check that everyone's dev environment is working
+
+### 2. `application.properties` + `@Value` (10 min)
+- Recap how properties are stored in `application.properties`
+- Recap how to inject property values into a class using `@Value`
+- Remind students this is exactly how the API key will be configured in today's lesson
+
+### 3. `@RestController` + `@GetMapping` + `@RequestParam` + `@PathVariable` (15 min)
+- Recap how `@RestController` marks a class as a controller
+- Recap how `@GetMapping` maps a method to a URL route
+- Recap the difference between query parameters (`@RequestParam`) and path variables (`@PathVariable`)
+- Show a quick example if needed
+
+### 4. Dependency Injection — `@Component` + `@Autowired` (10 min)
+- Recap why we use DI instead of creating objects with `new`
+- Recap how `@Component` registers a class as a Spring bean
+- Recap how `@Autowired` injects the bean into another class
+- Let students know that today they will see a second DI style — constructor injection
+
+### 🧑‍💻 Revision Activity (10 min)
+
+Create a simple Spring Boot endpoint that combines controllers and DI.
+
+1. Create a `Product` class with the following fields and generate getters/setters:
+```java
+private int id;
+private String name;
+private double price;
+```
+
+2. Annotate it with `@Component` so Spring can manage it.
+
+3. Create a `ProductController.java`, inject the `Product` bean using `@Autowired`, and create an endpoint `/products/{id}` that sets some values on the product and returns it.
+
+Expected result: calling `localhost:8080/products/1` returns a JSON response with the product details.
+
+### 5. Open Q&A (10 min)
+- Invite students to raise anything unclear from Lesson 3.11
+- Address any issues with their local setup before starting the new content
 
 ---
 
