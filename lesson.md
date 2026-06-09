@@ -115,7 +115,7 @@ First, add the BOM inside the `<dependencyManagement>` block. If this block does
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-bom</artifactId>
-      <version>1.1.0</version>
+      <version>1.1.5</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -130,9 +130,11 @@ Next, add the OpenAI starter inside your existing `<dependencies>` block.
 ```xml
 <dependency>
   <groupId>org.springframework.ai</groupId>
-  <artifactId>spring-ai-openai-spring-boot-starter</artifactId>
+  <artifactId>spring-ai-starter-model-openai</artifactId>
 </dependency>
 ```
+
+> ⚠️ **Note:** Spring AI renamed its starter artifacts in the 1.0 release. The old name (`spring-ai-openai-spring-boot-starter`) no longer exists in Maven Central. The correct artifact ID from 1.0 onwards is `spring-ai-starter-model-openai`. Many older tutorials on the internet still use the old name — if you follow them, your build will fail.
 
 Save the file. Maven will download the dependencies automatically. You will see a prompt in VS Code to reload — click **Yes**.
 
@@ -166,9 +168,11 @@ mvn spring-boot:run
 
 ## Part 3: Your First AI Endpoint
 
-Now the interesting part. Create a new file `AiController.java` in your main package and code along.
+Now the interesting part. Create a new file `AiController.java` in your main package (`sg.edu.ntu`) and code along.
 
 ```java
+package sg.edu.ntu;
+
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -188,7 +192,7 @@ public class AiController {
 
 Notice how we are injecting `ChatClient.Builder` through the constructor. This is called **constructor injection** — it is another way to apply Dependency Injection, and is actually the preferred approach in modern Spring development. Instead of annotating a field with `@Autowired`, you declare the dependency as a constructor parameter and Spring automatically provides the bean when it creates the class. The end result is the same — Spring manages the object for you — but constructor injection makes dependencies more explicit and easier to test. We then call `.build()` to get our `ChatClient` instance, ready to send prompts to the model.
 
-Now add our first endpoint.
+Now add our first endpoint inside the class.
 
 ```java
 @GetMapping("/chat")
@@ -205,6 +209,36 @@ Let's break down what this does:
 - `.user(message)` — sets the user's message (what the user is asking)
 - `.call()` — sends the request to OpenAI and waits for the response
 - `.content()` — extracts the response text as a plain `String`
+
+Your complete `AiController.java` should now look like this:
+
+```java
+package sg.edu.ntu;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class AiController {
+
+  private final ChatClient chatClient;
+
+  public AiController(ChatClient.Builder chatClientBuilder) {
+    this.chatClient = chatClientBuilder.build();
+  }
+
+  @GetMapping("/chat")
+  public String chat(@RequestParam String message) {
+    return chatClient.prompt()
+        .user(message)
+        .call()
+        .content();
+  }
+
+}
+```
 
 Run the application and test it.
 
@@ -231,6 +265,8 @@ A system prompt is a behind-the-scenes instruction that you provide to the model
 
 Let's create a dedicated endpoint that uses a system prompt to turn our AI into a helpful customer support assistant for the `simple-crm` project from last lesson.
 
+Add this endpoint to your `AiController.java`:
+
 ```java
 @GetMapping("/support")
 public String support(@RequestParam String message) {
@@ -242,6 +278,48 @@ public String support(@RequestParam String message) {
       .user(message)
       .call()
       .content();
+}
+```
+
+Your complete `AiController.java` should now look like this:
+
+```java
+package sg.edu.ntu;
+
+import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+public class AiController {
+
+  private final ChatClient chatClient;
+
+  public AiController(ChatClient.Builder chatClientBuilder) {
+    this.chatClient = chatClientBuilder.build();
+  }
+
+  @GetMapping("/chat")
+  public String chat(@RequestParam String message) {
+    return chatClient.prompt()
+        .user(message)
+        .call()
+        .content();
+  }
+
+  @GetMapping("/support")
+  public String support(@RequestParam String message) {
+    return chatClient.prompt()
+        .system("You are a friendly and professional customer support assistant for a CRM software company. " +
+                "You help users with questions about managing customers, contacts, and sales pipelines. " +
+                "Keep your answers concise and practical. " +
+                "If a question is not related to CRM or customer management, politely redirect the user.")
+        .user(message)
+        .call()
+        .content();
+  }
+
 }
 ```
 
@@ -288,7 +366,7 @@ Your task:
 
 In this lesson you saw how Spring AI lets you add LLM capabilities to a Spring Boot application with minimal code. The key concepts to remember:
 
-- The `spring-ai-openai-spring-boot-starter` dependency + BOM wires everything up automatically
+- The `spring-ai-starter-model-openai` dependency + BOM wires everything up automatically
 - `ChatClient` is your main interface for sending prompts and receiving responses
 - `ChatClient.Builder` is injected by Spring — the same DI pattern you already know
 - `.prompt().user("...").call().content()` is the standard pattern for a simple chat call
