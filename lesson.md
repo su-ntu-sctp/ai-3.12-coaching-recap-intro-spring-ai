@@ -17,6 +17,18 @@ By the end of this lesson, students will be able to:
 
 ---
 
+## ⚙️ Pre-work (Complete Before Saturday)
+
+Before attending this session, you must have your OpenAI API key ready and your account funded. Without this, you will not be able to run the code during the lesson.
+
+1. Go to [https://platform.openai.com](https://platform.openai.com) and create an account if you do not have one
+2. Go to [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) and create an API key — save it somewhere safe
+3. Go to [https://platform.openai.com/settings/billing](https://platform.openai.com/settings/billing) and add at least **$5 in credits**
+
+> ⚠️ The OpenAI API is not free. However, $5 is more than enough for this entire lesson — GPT-4o-mini costs roughly $0.002 per request. Without credits, every API call will fail with a quota error.
+
+---
+
 ## Revision: Lesson 3.11 Key Concepts (60 min)
 
 This session begins with a revision of Lesson 3.11 — the foundation that students need to be comfortable with before the Spring AI code-along. Work through each topic briefly and invite students to ask questions as you go.
@@ -58,7 +70,7 @@ private double price;
 
 3. Create a `ProductController.java`, inject the `Product` bean using `@Autowired`, and create an endpoint `/products/{id}` that sets some values on the product and returns it.
 
-Expected result: calling `localhost:8080/products/1` returns a JSON response with the product details.
+Expected result: calling `localhost:8080/products/1` in the browser returns a JSON response with the product details.
 
 ### 5. Open Q&A (10 min)
 - Invite students to raise anything unclear from Lesson 3.11
@@ -149,9 +161,11 @@ spring.ai.openai.chat.options.model=gpt-4o-mini
 spring.ai.openai.chat.options.temperature=0.7
 ```
 
-Replace `YOUR_API_KEY_HERE` with your actual OpenAI API key. You can find or create one at [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+Replace `YOUR_API_KEY_HERE` with your actual OpenAI API key.
 
 > ⚠️ **Important:** Never commit your API key to a public Git repository. For now, pasting it directly is fine for learning. In production, you would use environment variables or a secrets manager.
+
+> ⚠️ **Common error:** If you see `HTTP 429 - insufficient_quota` when you test the endpoint, it means your OpenAI account has no credits. This is a billing issue, not a code bug. Go to [https://platform.openai.com/settings/billing](https://platform.openai.com/settings/billing) and add credits.
 
 **What do these properties mean?**
 - `api-key` — your credentials to access the OpenAI API
@@ -169,6 +183,16 @@ mvn spring-boot:run
 ## Part 3: Your First AI Endpoint
 
 Now the interesting part. Create a new file `AiController.java` in your main package (`sg.edu.ntu`) and code along.
+
+### Understanding ChatClient and ChatClient.Builder
+
+Before we write the code, let's understand the two key Spring AI objects we are about to use.
+
+**`ChatClient`** is the main Spring AI object you use to communicate with the LLM. Think of it like `JdbcTemplate` for databases — it is Spring's clean abstraction over all the raw HTTP calls, authentication, and JSON parsing that happen under the hood. You call methods on it to send prompts and receive responses.
+
+**`ChatClient.Builder`** is a builder object that Spring AI auto-creates and registers as a bean. You do not create it yourself — Spring injects it for you. Its job is to configure and construct the `ChatClient` instance.
+
+**Why `.build()`?** Because `ChatClient.Builder` is the factory, not the client itself. You call `.build()` once in the constructor to produce the ready-to-use `ChatClient`. From that point on, you use `chatClient` to send all your prompts.
 
 ```java
 package sg.edu.ntu;
@@ -190,7 +214,7 @@ public class AiController {
 }
 ```
 
-Notice how we are injecting `ChatClient.Builder` through the constructor. This is called **constructor injection** — it is another way to apply Dependency Injection, and is actually the preferred approach in modern Spring development. Instead of annotating a field with `@Autowired`, you declare the dependency as a constructor parameter and Spring automatically provides the bean when it creates the class. The end result is the same — Spring manages the object for you — but constructor injection makes dependencies more explicit and easier to test. We then call `.build()` to get our `ChatClient` instance, ready to send prompts to the model.
+Notice how we are injecting `ChatClient.Builder` through the constructor. This is called **constructor injection** — it is another way to apply Dependency Injection, and is actually the preferred approach in modern Spring development. Instead of annotating a field with `@Autowired`, you declare the dependency as a constructor parameter and Spring automatically provides the bean when it creates the class. The end result is the same — Spring manages the object for you — but constructor injection makes dependencies more explicit and easier to test.
 
 Now add our first endpoint inside the class.
 
@@ -240,13 +264,8 @@ public class AiController {
 }
 ```
 
-Run the application and test it.
+Run the application and test it in your browser:
 
-```bash
-curl "localhost:8080/chat?message=What is Java?"
-```
-
-Or open your browser at:
 ```
 localhost:8080/chat?message=What is Java?
 ```
@@ -323,14 +342,16 @@ public class AiController {
 }
 ```
 
-Run the application and test both endpoints.
+Test both endpoints in your browser:
 
-```bash
-# Should give a focused CRM-related answer
-curl "localhost:8080/support?message=How do I add a new customer?"
-
-# Should politely redirect
-curl "localhost:8080/support?message=What is the weather today?"
+```
+localhost:8080/chat?message=How do I add a new customer?
+```
+```
+localhost:8080/support?message=How do I add a new customer?
+```
+```
+localhost:8080/support?message=What is the weather today?
 ```
 
 Compare the responses from `/chat` and `/support` for the same question. Notice how the system prompt fundamentally changes the AI's behaviour — same model, same infrastructure, completely different personality and scope.
@@ -352,13 +373,35 @@ Your task:
 1. Create a new `@GetMapping` endpoint in `AiController.java` with a path of your choice
 2. Write a system prompt that gives the AI a clear role and personality for your theme
 3. Accept a `message` query parameter from the user
-4. Test your endpoint with at least 3 different messages and observe the responses
+4. Test your endpoint in the browser with at least 3 different messages and observe the responses
 
 **Hint:** A good system prompt usually includes:
 - Who the AI is (role)
 - What it helps with (scope)
 - How it should respond (tone/style)
 - What it should not do (boundaries)
+
+**Example — Interview Coach endpoint:**
+
+```java
+@GetMapping("/interview-coach")
+public String interviewCoach(@RequestParam String message) {
+  return chatClient.prompt()
+      .system("You are an expert Java technical interview coach. " +
+              "You help developers prepare for Java and Spring Boot job interviews. " +
+              "Provide clear explanations, example interview questions, and model answers. " +
+              "Keep your answers focused and practical. " +
+              "If a question is not related to Java or software development interviews, politely redirect the user.")
+      .user(message)
+      .call()
+      .content();
+}
+```
+
+Test it in the browser:
+```
+localhost:8080/interview-coach?message=What is the difference between an interface and an abstract class?
+```
 
 ---
 
@@ -367,8 +410,8 @@ Your task:
 In this lesson you saw how Spring AI lets you add LLM capabilities to a Spring Boot application with minimal code. The key concepts to remember:
 
 - The `spring-ai-starter-model-openai` dependency + BOM wires everything up automatically
-- `ChatClient` is your main interface for sending prompts and receiving responses
-- `ChatClient.Builder` is injected by Spring — the same DI pattern you already know
+- **`ChatClient`** is your main interface for sending prompts and receiving responses — Spring AI's abstraction over the raw OpenAI API
+- **`ChatClient.Builder`** is injected by Spring and used to construct the `ChatClient` via `.build()`
 - `.prompt().user("...").call().content()` is the standard pattern for a simple chat call
 - A **system prompt** (`.system("...")`) shapes the AI's role and behaviour before the user's message
 
