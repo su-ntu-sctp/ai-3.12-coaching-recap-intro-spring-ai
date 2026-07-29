@@ -4,7 +4,7 @@
 
 In this session you will connect a Spring Boot application to a Large Language Model (LLM) such as OpenAI's GPT using **Spring AI**, a framework that makes the integration straightforward. You will go from a blank Spring Boot project to a working AI-powered REST endpoint in a single session, then customise the AI's behaviour with a system prompt. No prior AI experience is required.
 
-> **Version baseline (instructor note):** This lesson targets **Spring AI 2.0** on **Spring Boot 4.x** with **Java 21**. Spring AI 2.0 (GA June 2026) requires Spring Boot 4, so make sure students create the project on the current Spring Boot 4.x offered by Spring Initializr.
+> **Note:** This lesson uses **Spring AI 2.0** on **Spring Boot 4.x** with **Java 21**. Spring AI 2.0 requires Spring Boot 4, so create your project on the current Spring Boot 4.x offered by Spring Initializr.
 
 ## Lesson Objectives
 
@@ -42,7 +42,7 @@ AI features are now a standard part of enterprise applications — chatbots, int
 
 Spring AI supports many providers (OpenAI, Anthropic, Google, Amazon Bedrock, Mistral, DeepSeek, Ollama, and more). In this lesson we will use **OpenAI** with the **GPT-4o-mini** model — it is fast, inexpensive, and ideal for learning.
 
-> **Instructor note:** Spring AI 2.0 focused its core on a smaller set of first-class providers and now uses each vendor's official SDK under the hood (for OpenAI, the `openai-java` SDK). This is invisible to us at the `ChatClient` level — the same code works regardless of provider — but it is worth mentioning to experienced engineers who will ask "is this hand-rolled HTTP or the real SDK?" It is the real SDK.
+> **Note:** Spring AI 2.0 uses each vendor's official SDK under the hood (for OpenAI, the `openai-java` SDK). This is invisible at the `ChatClient` level — the same code works regardless of provider — and it is the real SDK, not hand-rolled HTTP.
 
 ---
 
@@ -67,7 +67,7 @@ For dependencies, select:
 
 We will add the Spring AI dependency manually in the next step.
 
-> **Instructor note:** In Spring Boot 4, the web starter appears in the generated `pom.xml` as `spring-boot-starter-webmvc` (renamed from `spring-boot-starter-web` in Spring Boot 3). Selecting "Spring Web" in Initializr adds the correct one automatically — students only see the difference if they inspect the pom. Many online tutorials still show the old name.
+> **Note:** In Spring Boot 4, the web starter appears in the generated `pom.xml` as `spring-boot-starter-webmvc` (renamed from `spring-boot-starter-web` in Spring Boot 3). Selecting "Spring Web" in Initializr adds the correct one automatically. Many online tutorials still show the old name.
 
 ### Add the Spring AI Dependency
 
@@ -130,7 +130,7 @@ Replace `YOUR_API_KEY_HERE` with your actual OpenAI API key. If you have not cre
 - `model` — `gpt-4o-mini` is a fast and affordable model, perfect for development
 - `temperature` — controls how creative/varied the responses are. `0.7` is a good balanced value. `0.0` is very deterministic; `1.0` is very creative. Note: Spring AI 2.0 no longer applies its own default temperature — it defers to the provider's default — so setting this explicitly is meaningful.
 
-> **Instructor note (model choice):** `gpt-4o-mini` remains the cheapest well-known OpenAI model and is the safest teaching default. Its only real limitation is a training cutoff of October 2023, which does not matter for this lesson. If you want something newer, you can swap in a current low-cost model (for example `gpt-5-nano` or `gpt-4.1-nano`) by changing only the `spring.ai.openai.chat.model` value — no code changes. Keep everyone on the same model in class to avoid confusion.
+> **Note:** `gpt-4o-mini` is the cheapest well-known OpenAI model and a good default. Its only real limitation is a training cutoff of October 2023, which does not matter for this lesson. You can swap in another low-cost model (for example `gpt-5-nano` or `gpt-4.1-nano`) by changing only the `spring.ai.openai.chat.model` value — no code changes.
 
 Run the application to confirm it starts without errors.
 
