@@ -1,80 +1,32 @@
-# Lesson: Coaching: Recap on REST API Development with Spring Boot + Introduction to Spring AI
+# Lesson: Coaching — Introduction to Spring AI
 
 ## Lesson Overview
 
-This Saturday coaching session has two parts. The first hour revisits the key concepts from Lesson 3.11 — REST API development with Spring Boot — through a structured recap and a hands-on activity. The second part introduces Spring AI, a framework that makes it straightforward to connect your Spring Boot application to a Large Language Model (LLM) such as OpenAI's GPT. You will go from a blank Spring Boot project to a working AI-powered REST endpoint in a single session. No prior AI experience is required.
+In this session you will connect a Spring Boot application to a Large Language Model (LLM) such as OpenAI's GPT using **Spring AI**, a framework that makes the integration straightforward. You will go from a blank Spring Boot project to a working AI-powered REST endpoint in a single session, then customise the AI's behaviour with a system prompt. No prior AI experience is required.
 
-**Prerequisites:** Spring Boot basics (Lesson 3.11) — project setup, controllers, `application.properties`, Dependency Injection
+> **Version baseline (instructor note):** This lesson targets **Spring AI 2.0** on **Spring Boot 4.x** with **Java 21**. Spring AI 2.0 (GA June 2026) requires Spring Boot 4, so make sure students create the project on the current Spring Boot 4.x offered by Spring Initializr.
 
 ## Lesson Objectives
 
 By the end of this lesson, students will be able to:
 
-1. **Demonstrate** understanding of REST API development with Spring Boot by building a working endpoint from scratch
-2. **Add** Spring AI to a Spring Boot project and configure it with an OpenAI API key
-3. **Build** a REST endpoint that sends a user prompt to an LLM and returns the response
-4. **Customise** AI behaviour by applying a system prompt
+1. **Add** Spring AI to a Spring Boot project and configure it with an OpenAI API key
+2. **Build** a REST endpoint that sends a user prompt to an LLM and returns the response
+3. **Customise** AI behaviour by applying a system prompt
 
 ---
 
-## ⚙️ Pre-work (Complete Before Saturday)
+## Prerequisites
 
-Before attending this session, you must have your OpenAI API key ready and your account funded. Without this, you will not be able to run the code during the lesson.
+This lesson assumes you are comfortable with Spring Boot basics — creating a project, writing a controller, using `application.properties`, and Dependency Injection.
 
-1. Go to [https://platform.openai.com](https://platform.openai.com) and create an account if you do not have one
-2. Go to [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys) and create an API key — save it somewhere safe
-3. Go to [https://platform.openai.com/settings/billing](https://platform.openai.com/settings/billing) and add at least **$5 in credits**
+You will also use your own **OpenAI API key** to run the code. Setting one up takes about five minutes, and you can do it any time before the lesson:
 
-> ⚠️ The OpenAI API is not free. However, $5 is more than enough for this entire lesson — GPT-4o-mini costs roughly $0.002 per request. Without credits, every API call will fail with a quota error.
+1. **Create an account.** Go to [platform.openai.com](https://platform.openai.com) and sign up or log in. This is OpenAI's developer platform — separate from ChatGPT, with its own billing.
+2. **Add a small amount of credit.** Open **Settings → Billing** ([billing overview](https://platform.openai.com/settings/organization/billing/overview)) and add **$5**. That is more than enough for the whole lesson — a request through GPT-4o-mini costs a fraction of a cent. While you are there, you can optionally set a low monthly limit for peace of mind.
+3. **Generate your key.** Go to [API keys](https://platform.openai.com/api-keys) → **Create new secret key**, then copy it somewhere safe. OpenAI shows the full key only once, and it will start with `sk-proj-`.
 
----
-
-## Revision: Lesson 3.11 Key Concepts (60 min)
-
-This session begins with a revision of Lesson 3.11 — the foundation that students need to be comfortable with before the Spring AI code-along. Work through each topic briefly and invite students to ask questions as you go.
-
-### 1. Project Setup + Running Spring Boot (5 min)
-- Recap how to create a Spring Boot project via Spring Initializr
-- Recap how to add dependencies to `pom.xml` and run with `mvn spring-boot:run`
-- Quickly check that everyone's dev environment is working
-
-### 2. `application.properties` + `@Value` (10 min)
-- Recap how properties are stored in `application.properties`
-- Recap how to inject property values into a class using `@Value`
-- Remind students this is exactly how the API key will be configured in today's lesson
-
-### 3. `@RestController` + `@GetMapping` + `@RequestParam` + `@PathVariable` (15 min)
-- Recap how `@RestController` marks a class as a controller
-- Recap how `@GetMapping` maps a method to a URL route
-- Recap the difference between query parameters (`@RequestParam`) and path variables (`@PathVariable`)
-- Show a quick example if needed
-
-### 4. Dependency Injection — `@Component` + `@Autowired` (10 min)
-- Recap why we use DI instead of creating objects with `new`
-- Recap how `@Component` registers a class as a Spring bean
-- Recap how `@Autowired` injects the bean into another class
-- Let students know that today they will see a second DI style — constructor injection
-
-### 🧑‍💻 Revision Activity (10 min)
-
-Create a simple Spring Boot endpoint that combines controllers and DI.
-
-1. Create a `Product` class with the following fields and generate getters/setters:
-```java
-private int id;
-private String name;
-private double price;
-```
-
-2. Annotate it with `@Component` so Spring can manage it.
-
-3. Create a `ProductController.java`, inject the `Product` bean using `@Autowired`, and create an endpoint `/products/{id}` that sets some values on the product and returns it.
-
-Expected result: calling `localhost:8080/products/1` in the browser returns a JSON response with the product details.
-
-### 5. Open Q&A (10 min)
-- Invite students to raise anything unclear from Lesson 3.11
-- Address any issues with their local setup before starting the new content
+That is all — keep the key handy and you are ready to go. If you ever see a `429 insufficient_quota` message, it just means the account needs credit added.
 
 ---
 
@@ -86,9 +38,11 @@ Before Spring AI existed, integrating an LLM into a Java application meant manua
 
 **Why does this matter?**
 
-By 2025, AI features are becoming a standard part of enterprise applications — chatbots, intelligent search, automated summaries, and more. As Java developers, knowing how to wire an LLM into a Spring Boot backend puts you at a significant advantage. Today you will see just how few lines of code it actually takes.
+AI features are now a standard part of enterprise applications — chatbots, intelligent search, automated summaries, and more. As Java developers, knowing how to wire an LLM into a Spring Boot backend puts you at a significant advantage. Today you will see just how few lines of code it actually takes.
 
-Spring AI supports many providers (OpenAI, Ollama, Azure, Google, Anthropic, and more). In this lesson we will use **OpenAI** with the **GPT-4o-mini** model — it is fast, inexpensive, and ideal for learning.
+Spring AI supports many providers (OpenAI, Anthropic, Google, Amazon Bedrock, Mistral, DeepSeek, Ollama, and more). In this lesson we will use **OpenAI** with the **GPT-4o-mini** model — it is fast, inexpensive, and ideal for learning.
+
+> **Instructor note:** Spring AI 2.0 focused its core on a smaller set of first-class providers and now uses each vendor's official SDK under the hood (for OpenAI, the `openai-java` SDK). This is invisible to us at the `ChatClient` level — the same code works regardless of provider — but it is worth mentioning to experienced engineers who will ask "is this hand-rolled HTTP or the real SDK?" It is the real SDK.
 
 ---
 
@@ -100,7 +54,7 @@ Create a new Spring Boot project using Spring Initializr (Ctrl/Cmd + Shift + P �
 
 | Setting | Value |
 |---|---|
-| Spring Boot version | `3.4.x` (choose the latest 3.4) |
+| Spring Boot version | Current stable release offered by Spring Initializr (**Spring Boot 4.x**) |
 | Language | Java |
 | Group ID | `sg.edu.ntu` |
 | Artifact ID | `spring-ai-demo` |
@@ -112,6 +66,8 @@ For dependencies, select:
 - **Spring Boot DevTools**
 
 We will add the Spring AI dependency manually in the next step.
+
+> **Instructor note:** In Spring Boot 4, the web starter appears in the generated `pom.xml` as `spring-boot-starter-webmvc` (renamed from `spring-boot-starter-web` in Spring Boot 3). Selecting "Spring Web" in Initializr adds the correct one automatically — students only see the difference if they inspect the pom. Many online tutorials still show the old name.
 
 ### Add the Spring AI Dependency
 
@@ -127,7 +83,7 @@ First, add the BOM inside the `<dependencyManagement>` block. If this block does
     <dependency>
       <groupId>org.springframework.ai</groupId>
       <artifactId>spring-ai-bom</artifactId>
-      <version>1.1.5</version>
+      <version>2.0.0</version>
       <type>pom</type>
       <scope>import</scope>
     </dependency>
@@ -146,7 +102,7 @@ Next, add the OpenAI starter inside your existing `<dependencies>` block.
 </dependency>
 ```
 
-> ⚠️ **Note:** Spring AI renamed its starter artifacts in the 1.0 release. The old name (`spring-ai-openai-spring-boot-starter`) no longer exists in Maven Central. The correct artifact ID from 1.0 onwards is `spring-ai-starter-model-openai`. Many older tutorials on the internet still use the old name — if you follow them, your build will fail.
+> ⚠️ **Note on the artifact name:** Spring AI renamed its starter artifacts back in the 1.0 release. The old name (`spring-ai-openai-spring-boot-starter`) no longer exists in Maven Central. The correct artifact ID — still correct in 2.0 — is `spring-ai-starter-model-openai`. Many older tutorials on the internet still use the old name; if you follow them, your build will fail.
 
 Save the file. Maven will download the dependencies automatically. You will see a prompt in VS Code to reload — click **Yes**.
 
@@ -157,20 +113,24 @@ Open `src/main/resources/application.properties` and add the following.
 ```properties
 # Spring AI - OpenAI Configuration
 spring.ai.openai.api-key=YOUR_API_KEY_HERE
-spring.ai.openai.chat.options.model=gpt-4o-mini
-spring.ai.openai.chat.options.temperature=0.7
+spring.ai.openai.chat.model=gpt-4o-mini
+spring.ai.openai.chat.temperature=0.7
 ```
 
-Replace `YOUR_API_KEY_HERE` with your actual OpenAI API key.
+Replace `YOUR_API_KEY_HERE` with your actual OpenAI API key. If you have not created your key yet, see the **Prerequisites** section at the top — it only takes a few minutes.
+
+> ⚠️ **Property key change in Spring AI 2.0:** The model and temperature keys no longer contain an `.options` segment. In Spring AI 1.x these were `spring.ai.openai.chat.options.model` and `spring.ai.openai.chat.options.temperature`. In 2.0 they are flattened to `spring.ai.openai.chat.model` and `spring.ai.openai.chat.temperature`. The old `.options.` form still works through a deprecated alias, but use the flattened form. Nearly every online tutorial still shows the old `.options.` keys.
 
 > ⚠️ **Important:** Never commit your API key to a public Git repository. For now, pasting it directly is fine for learning. In production, you would use environment variables or a secrets manager.
 
-> ⚠️ **Common error:** If you see `HTTP 429 - insufficient_quota` when you test the endpoint, it means your OpenAI account has no credits. This is a billing issue, not a code bug. Go to [https://platform.openai.com/settings/billing](https://platform.openai.com/settings/billing) and add credits.
+> ⚠️ **Common error:** If you see `HTTP 429 - insufficient_quota` when you test the endpoint, it means your OpenAI account has no credits. This is a billing issue, not a code bug. Go to [the billing overview](https://platform.openai.com/settings/organization/billing/overview) and add credits.
 
 **What do these properties mean?**
 - `api-key` — your credentials to access the OpenAI API
 - `model` — `gpt-4o-mini` is a fast and affordable model, perfect for development
-- `temperature` — controls how creative/varied the responses are. `0.7` is a good balanced value. `0.0` is very deterministic; `1.0` is very creative.
+- `temperature` — controls how creative/varied the responses are. `0.7` is a good balanced value. `0.0` is very deterministic; `1.0` is very creative. Note: Spring AI 2.0 no longer applies its own default temperature — it defers to the provider's default — so setting this explicitly is meaningful.
+
+> **Instructor note (model choice):** `gpt-4o-mini` remains the cheapest well-known OpenAI model and is the safest teaching default. Its only real limitation is a training cutoff of October 2023, which does not matter for this lesson. If you want something newer, you can swap in a current low-cost model (for example `gpt-5-nano` or `gpt-4.1-nano`) by changing only the `spring.ai.openai.chat.model` value — no code changes. Keep everyone on the same model in class to avoid confusion.
 
 Run the application to confirm it starts without errors.
 
@@ -282,7 +242,7 @@ Right now, the AI will answer any question about any topic. In real applications
 
 A system prompt is a behind-the-scenes instruction that you provide to the model before the user's message. It shapes how the AI responds — its tone, its focus area, and what it should or should not do.
 
-Let's create a dedicated endpoint that uses a system prompt to turn our AI into a helpful customer support assistant for the `simple-crm` project from last lesson.
+Let's create a dedicated endpoint that uses a system prompt to turn our AI into a helpful customer support assistant for a CRM application.
 
 Add this endpoint to your `AiController.java`:
 
@@ -409,13 +369,15 @@ localhost:8080/interview-coach?message=What is the difference between an interfa
 
 In this lesson you saw how Spring AI lets you add LLM capabilities to a Spring Boot application with minimal code. The key concepts to remember:
 
-- The `spring-ai-starter-model-openai` dependency + BOM wires everything up automatically
+- We are on **Spring AI 2.0**, which runs on **Spring Boot 4**
+- The `spring-ai-starter-model-openai` dependency + the `spring-ai-bom` (version `2.0.0`) wire everything up automatically
+- Configuration property keys in 2.0 are **flattened** — `spring.ai.openai.chat.model`, not `...chat.options.model`
 - **`ChatClient`** is your main interface for sending prompts and receiving responses — Spring AI's abstraction over the raw OpenAI API
 - **`ChatClient.Builder`** is injected by Spring and used to construct the `ChatClient` via `.build()`
 - `.prompt().user("...").call().content()` is the standard pattern for a simple chat call
 - A **system prompt** (`.system("...")`) shapes the AI's role and behaviour before the user's message
 
-This is just the beginning — Spring AI also supports conversation memory, file uploads, function calling, and Retrieval Augmented Generation (RAG). These are topics you will explore further as you progress in the programme.
+This is just the beginning — Spring AI also supports conversation memory, file uploads, tool calling, and Retrieval Augmented Generation (RAG). These are topics you will explore further as you progress in the programme.
 
 ---
 
