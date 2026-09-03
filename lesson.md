@@ -334,6 +334,12 @@ This is the core power of system prompts: with a single block of text, you can t
 
 ## 🧑‍💻 Activity **(20 minutes)**
 
+There are two tasks below. Complete **Task 1** first. Only move on to **Task 2** once Task 1 is working.
+
+---
+
+### Task 1: Build your own themed AI assistant
+
 Build your own themed AI assistant endpoint. Pick one of the following themes, or come up with your own:
 
 - 🛍️ **Product Recommender** — helps users find the right product based on their needs
@@ -345,7 +351,7 @@ Your task:
 1. Create a new `@GetMapping` endpoint in `AiController.java` with a path of your choice
 2. Write a system prompt that gives the AI a clear role and personality for your theme
 3. Accept a `message` query parameter from the user
-4. Test your endpoint in the browser with at least 3 different messages and observe the responses
+4. Test your endpoint with at least 3 different messages and observe the responses
 
 **Hint:** A good system prompt usually includes:
 - Who the AI is (role)
@@ -353,27 +359,41 @@ Your task:
 - How it should respond (tone/style)
 - What it should not do (boundaries)
 
-**Example — Interview Coach endpoint:**
+---
 
-```java
-@GetMapping("/interview-coach")
-public String interviewCoach(@RequestParam String message) {
-  return chatClient.prompt()
-      .system("You are an expert Java technical interview coach. " +
-              "You help developers prepare for Java and Spring Boot job interviews. " +
-              "Provide clear explanations, example interview questions, and model answers. " +
-              "Keep your answers focused and practical. " +
-              "If a question is not related to Java or software development interviews, politely redirect the user.")
-      .user(message)
-      .call()
-      .content();
-}
+### Task 2: Build a summariser endpoint
+
+Attempt this only after Task 1 is working.
+
+Summarising long text is one of the most common uses of AI in real applications. A staff member pastes in a long report, a support thread, or a contract, and gets back a short summary they can actually read.
+
+> **Note:** In a real project the text would not be pasted in by hand. The application would read it from a document, a database, or an uploaded file, and often use a technique called RAG to pull in the right content automatically. You will meet RAG later in this programme. For now we pass the text in directly, so you can focus on how the system prompt shapes the output.
+
+Your task:
+1. Create a new endpoint `/summarise` in `AiController.java`
+2. Accept a `text` query parameter
+3. Write a system prompt that instructs the AI to summarise the text in **exactly five bullet points**, in plain language, with no introduction and no closing remarks
+4. Test it with the sample text below
+
+**Sample text to test with:**
+
+```
+The Q3 platform migration finished two weeks behind schedule. The delay came mainly from
+the payments module, where an undocumented dependency on the old session service was only
+discovered during integration testing. The team resolved it by introducing a temporary
+adapter, which is now scheduled for removal in Q1. Overall system latency improved by
+around 18 percent after the migration, and error rates during peak hours dropped noticeably.
+Three engineers were pulled from the reporting project to help with the fix, which pushed
+the reporting dashboard work into the next quarter. The team has recommended that future
+migrations include a dependency audit before work begins, and that integration testing
+start earlier rather than at the end.
 ```
 
-Test it in the browser:
-```
-localhost:8080/interview-coach?message=What is the difference between an interface and an abstract class?
-```
+Paste it into Postman as the value of the `text` parameter and send the request.
+
+**Things to notice:**
+- Your prompt has to be firm about the output. If you only ask for "a summary", you will often get a paragraph, or a sentence of introduction before the bullet points. Asking for *exactly five bullet points and nothing else* gives you a predictable result.
+- This is the real skill in production work. When your Java code has to do something with the AI's answer, the answer needs a shape you can rely on.
 
 ---
 
