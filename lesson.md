@@ -10,7 +10,7 @@ In this session you will connect a Spring Boot application to a Large Language M
 
 By the end of this lesson, students will be able to:
 
-1. **Add** Spring AI to a Spring Boot project and configure it with an OpenAI API key
+1. **Add** Spring AI to a Spring Boot project and configure it with an API key
 2. **Build** a REST endpoint that sends a user prompt to an LLM and returns the response
 3. **Customise** AI behaviour by applying a system prompt
 
@@ -20,13 +20,7 @@ By the end of this lesson, students will be able to:
 
 This lesson assumes you are comfortable with Spring Boot basics — creating a project, writing a controller, using `application.properties`, and Dependency Injection.
 
-You will also use your own **OpenAI API key** to run the code. Setting one up takes about five minutes, and you can do it any time before the lesson:
-
-1. **Create an account.** Go to [platform.openai.com](https://platform.openai.com) and sign up or log in. This is OpenAI's developer platform — separate from ChatGPT, with its own billing.
-2. **Add a small amount of credit.** Open **Settings → Billing** ([billing overview](https://platform.openai.com/settings/organization/billing/overview)) and add **$5**. That is more than enough for the whole lesson — a request through GPT-4o-mini costs a fraction of a cent. While you are there, you can optionally set a low monthly limit for peace of mind.
-3. **Generate your key.** Go to [API keys](https://platform.openai.com/api-keys) → **Create new secret key**, then copy it somewhere safe. OpenAI shows the full key only once, and it will start with `sk-proj-`.
-
-That is all — keep the key handy and you are ready to go. If you ever see a `429 insufficient_quota` message, it just means the account needs credit added.
+You will also need your own **API key** to run the code. See **api-key-setup.md** for how to create one. There are two options in that document, and either works for this lesson. Have your key saved and ready before the session.
 
 ---
 
@@ -108,7 +102,9 @@ Save the file. Maven will download the dependencies automatically. You will see 
 
 ### Configure the API Key
 
-Open `src/main/resources/application.properties` and add the following.
+Open `src/main/resources/application.properties`. What you add here depends on which key you created in **api-key-setup.md**. Use **one** of the two blocks below — not both.
+
+**If you are using an OpenAI key:**
 
 ```properties
 # Spring AI - OpenAI Configuration
@@ -117,20 +113,36 @@ spring.ai.openai.chat.model=gpt-4o-mini
 spring.ai.openai.chat.temperature=0.7
 ```
 
-Replace `YOUR_API_KEY_HERE` with your actual OpenAI API key. If you have not created your key yet, see the **Prerequisites** section at the top — it only takes a few minutes.
+**If you are using an OpenRouter key:**
+
+```properties
+# Spring AI - OpenRouter Configuration
+spring.ai.openai.api-key=YOUR_API_KEY_HERE
+spring.ai.openai.base-url=https://openrouter.ai/api/v1
+spring.ai.openai.chat.model=openrouter/free
+spring.ai.openai.embedding.model=nvidia/llama-nemotron-embed-vl-1b-v2:free
+spring.ai.openai.embedding.encoding-format=float
+```
+
+Replace `YOUR_API_KEY_HERE` with your own key. If you have not created one yet, see **api-key-setup.md** — it only takes a few minutes.
+
+> **Note:** The two `embedding` lines in the OpenRouter block are not used in this lesson. They are needed in the third Spring AI lesson, so set them now and you will not have to come back to this file.
+
+**Why the OpenRouter block looks different**
+
+OpenRouter speaks the same language as OpenAI, so Spring AI's OpenAI starter can talk to it without any code change. The `base-url` line simply tells your application to send its requests to OpenRouter's address instead of OpenAI's, and the model names are the ones OpenRouter uses. Everything else in this lesson — the dependency, the controller, the code you write — is identical whichever key you chose.
 
 > ⚠️ **Property key change in Spring AI 2.0:** The model and temperature keys no longer contain an `.options` segment. In Spring AI 1.x these were `spring.ai.openai.chat.options.model` and `spring.ai.openai.chat.options.temperature`. In 2.0 they are flattened to `spring.ai.openai.chat.model` and `spring.ai.openai.chat.temperature`. The old `.options.` form still works through a deprecated alias, but use the flattened form. Nearly every online tutorial still shows the old `.options.` keys.
 
 > ⚠️ **Important:** Never commit your API key to a public Git repository. For now, pasting it directly is fine for learning. In production, you would use environment variables or a secrets manager.
 
-> ⚠️ **Common error:** If you see `HTTP 429 - insufficient_quota` when you test the endpoint, it means your OpenAI account has no credits. This is a billing issue, not a code bug. Go to [the billing overview](https://platform.openai.com/settings/organization/billing/overview) and add credits.
+> ⚠️ **Common error:** If you see `HTTP 429`, it means you have run out of requests. On OpenAI this is a billing issue — add credits at [the billing overview](https://platform.openai.com/settings/organization/billing/overview). On OpenRouter it means you have used your free requests for the day; they reset the next day.
 
 **What do these properties mean?**
-- `api-key` — your credentials to access the OpenAI API
-- `model` — `gpt-4o-mini` is a fast and affordable model, perfect for development
+- `api-key` — your credentials to access the service
+- `base-url` — the address your application sends requests to. You only set this when using a provider other than OpenAI.
+- `model` — which model answers your requests. `gpt-4o-mini` is fast and affordable; `openrouter/free` automatically picks an available free model.
 - `temperature` — controls how creative/varied the responses are. `0.7` is a good balanced value. `0.0` is very deterministic; `1.0` is very creative. Note: Spring AI 2.0 no longer applies its own default temperature — it defers to the provider's default — so setting this explicitly is meaningful.
-
-> **Note:** `gpt-4o-mini` is the cheapest well-known OpenAI model and a good default. Its only real limitation is a training cutoff of October 2023, which does not matter for this lesson. You can swap in another low-cost model (for example `gpt-5-nano` or `gpt-4.1-nano`) by changing only the `spring.ai.openai.chat.model` value — no code changes.
 
 Run the application to confirm it starts without errors.
 
@@ -191,7 +203,7 @@ public String chat(@RequestParam String message) {
 Let's break down what this does:
 - `chatClient.prompt()` — starts building a prompt to send to the model
 - `.user(message)` — sets the user's message (what the user is asking)
-- `.call()` — sends the request to OpenAI and waits for the response
+- `.call()` — sends the request to the model and waits for the response
 - `.content()` — extracts the response text as a plain `String`
 
 Your complete `AiController.java` should now look like this:
@@ -230,7 +242,7 @@ Run the application and test it in your browser:
 localhost:8080/chat?message=What is Java?
 ```
 
-You should see a response from GPT-4o-mini. You have just built an AI-powered REST endpoint in a Spring Boot application. 🎉
+You should see a response from the model. You have just built an AI-powered REST endpoint in a Spring Boot application. 🎉
 
 Try a few different messages and observe the responses.
 
@@ -371,6 +383,7 @@ In this lesson you saw how Spring AI lets you add LLM capabilities to a Spring B
 
 - We are on **Spring AI 2.0**, which runs on **Spring Boot 4**
 - The `spring-ai-starter-model-openai` dependency + the `spring-ai-bom` (version `2.0.0`) wire everything up automatically
+- The same starter works with other providers — pointing `base-url` at OpenRouter needs no code change at all
 - Configuration property keys in 2.0 are **flattened** — `spring.ai.openai.chat.model`, not `...chat.options.model`
 - **`ChatClient`** is your main interface for sending prompts and receiving responses — Spring AI's abstraction over the raw OpenAI API
 - **`ChatClient.Builder`** is injected by Spring and used to construct the `ChatClient` via `.build()`
