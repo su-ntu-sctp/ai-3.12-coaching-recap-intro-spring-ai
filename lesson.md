@@ -334,46 +334,21 @@ This is the core power of system prompts: with a single block of text, you can t
 
 ## 🧑‍💻 Activity **(20 minutes)**
 
-There are two tasks below. Complete **Task 1** first. Only move on to **Task 2** once Task 1 is working.
+### Build a summariser that saves its output to a file
 
----
-
-### Task 1: Build your own themed AI assistant
-
-Build your own themed AI assistant endpoint. Pick one of the following themes, or come up with your own:
-
-- 🛍️ **Product Recommender** — helps users find the right product based on their needs
-- 📚 **Study Buddy** — helps students understand Java concepts in simple terms
-- 🍽️ **Recipe Suggester** — suggests recipes based on ingredients the user has
-- 💼 **Interview Coach** — helps developers prepare for Java technical interviews
-
-Your task:
-1. Create a new `@GetMapping` endpoint in `AiController.java` with a path of your choice
-2. Write a system prompt that gives the AI a clear role and personality for your theme
-3. Accept a `message` query parameter from the user
-4. Test your endpoint with at least 3 different messages and observe the responses
-
-**Hint:** A good system prompt usually includes:
-- Who the AI is (role)
-- What it helps with (scope)
-- How it should respond (tone/style)
-- What it should not do (boundaries)
-
----
-
-### Task 2: Build a summariser endpoint
-
-Attempt this only after Task 1 is working.
-
-Summarising long text is one of the most common uses of AI in real applications. A staff member pastes in a long report, a support thread, or a contract, and gets back a short summary they can actually read.
+Summarising long text is one of the most common uses of AI in real applications. A staff member pastes in a long report, a support thread, or a contract, and gets back a short summary they can actually read — and often that summary needs to be saved somewhere, not just displayed.
 
 > **Note:** In a real project the text would not be pasted in by hand. The application would read it from a document, a database, or an uploaded file, and often use a technique called RAG to pull in the right content automatically. You will meet RAG later in this programme. For now we pass the text in directly, so you can focus on how the system prompt shapes the output.
 
-Your task:
+**Your task:**
+
 1. Create a new endpoint `/summarise` in `AiController.java`
 2. Accept a `text` query parameter
 3. Write a system prompt that instructs the AI to summarise the text in **exactly five bullet points**, in plain language, with no introduction and no closing remarks
 4. Test it with the sample text below
+5. Once the summary is correct, save it to a file called `summary.csv`
+
+---
 
 **Sample text to test with:**
 
@@ -389,11 +364,92 @@ migrations include a dependency audit before work begins, and that integration t
 start earlier rather than at the end.
 ```
 
-Paste it into Postman as the value of the `text` parameter and send the request.
+Paste it into Postman as the value of the `text` parameter and send the request. This is the same query parameter mechanism you already know — Postman just handles the encoding of the long text for you.
+
+---
+
+### Hint: writing the summary to a file
+
+Writing a file is new, so here is the code you need. Java's `Files.writeString()` takes a file path and the text to write.
+
+```java
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+```
+
+```java
+try {
+  Files.writeString(Path.of("summary.csv"), summary);
+} catch (IOException e) {
+  return "Could not save the file: " + e.getMessage();
+}
+```
+
+A few things to know about this:
+
+- **`IOException` is a checked exception.** Writing to a file can fail — the disk could be full, or the folder could be read-only — so Java forces you to deal with it. Wrap the call in a `try-catch` as shown above.
+- **Only the file writing goes inside the `try`.** The AI call cannot throw `IOException`, so keep it outside. Keeping a `try` block tight is good practice.
+- **Where does the file appear?** `Path.of("summary.csv")` is a relative path, so the file is created in the folder you started the application from. If you ran `mvn spring-boot:run` from your project root, the file appears in the **project root**, next to `pom.xml`. VS Code's file explorer sometimes does not show a new file straight away — right-click the folder and refresh.
+
+---
 
 **Things to notice:**
+
 - Your prompt has to be firm about the output. If you only ask for "a summary", you will often get a paragraph, or a sentence of introduction before the bullet points. Asking for *exactly five bullet points and nothing else* gives you a predictable result.
-- This is the real skill in production work. When your Java code has to do something with the AI's answer, the answer needs a shape you can rely on.
+- This is the real skill in production work. When your Java code has to do something with the AI's answer — save it, store it, pass it on — the answer needs a shape you can rely on.
+- **This is not a real CSV.** Open `summary.csv` in Excel and you will see the bullet points sitting in a single column. A real CSV has proper columns and rows, and to produce one you need the AI to return structured data rather than plain text. That is the next Spring AI lesson.
+
+---
+
+## Optional: Keeping your API key out of your code
+
+You do **not** need this for today's lesson. Pasting your key straight into `application.properties` is fine while you are learning, and everything above works exactly as written.
+
+This section is here for anyone who wants to do it the way real projects do. In a production application the API key never sits inside a file, because that file usually ends up in a Git repository. Instead the key is stored on the machine itself, as an **environment variable**, and the application reads it at startup.
+
+### Step 1: Check which shell you are using
+
+```bash
+echo $SHELL
+```
+
+- If it ends in **`bash`** (typical on WSL / Ubuntu), your settings file is `~/.bashrc`
+- If it ends in **`zsh`** (the default on macOS since Catalina), your settings file is `~/.zshrc`
+
+Everything below is identical for both — only the filename changes. The examples use `~/.bashrc`.
+
+### Step 2: Save the key
+
+```bash
+echo 'export OPENAI_API_KEY=your-real-key-here' >> ~/.bashrc
+```
+
+> ⚠️ Use `>>` (two arrows), not `>` (one). Two arrows add a line to the end of the file. One arrow would **overwrite the whole file** and wipe your existing settings.
+
+Note there are no spaces around the `=`.
+
+### Step 3: Reload and verify
+
+```bash
+source ~/.bashrc
+echo $OPENAI_API_KEY
+```
+
+If your key prints, it is saved. Every new terminal you open from now on will have it.
+
+### Step 4: Use it in application.properties
+
+```properties
+spring.ai.openai.api-key=${OPENAI_API_KEY}
+```
+
+Spring replaces `${OPENAI_API_KEY}` with the real value when the application starts. Your key no longer appears anywhere in your project.
+
+**Two things worth knowing:**
+
+- The variable belongs to your user account, not to a project, so **every** Spring Boot project on your machine can use it. Only that one line in `application.properties` needs adding per project.
+- If you change the key later, you edit `~/.bashrc` once and every project picks up the new value. A running application needs restarting to see the change.
 
 ---
 
